@@ -1,0 +1,12 @@
+Aditya Read Aloud — build notes
+
+1. Put the project files at the root of a GitHub repository.
+2. Commit/push to the main branch, or manually run the workflow “Build Aditya Read Aloud APK”.
+3. GitHub Actions builds a debug APK with Java 17, Gradle 9.1.0, Android SDK 36.1 and uploads it as “Aditya-Read-Aloud-debug”.
+
+Important platform limitation:
+The app uses Android's installed TextToSpeech voices. It prefers offline voices, but it cannot guarantee a male voice or a particular human-like voice because Android does not provide a universal gender/voice-quality guarantee. Choose the desired installed voice from Reader > वाचन सेटिंग > आवाज.
+
+Live word/range highlighting depends on the installed TTS engine providing UtteranceProgressListener range timing callbacks. When the engine does not provide them, the app still speaks and falls back to chunk-level highlighting.
+
+The app requests no INTERNET permission and stores imported PDFs and extracted page text in app-private storage.
