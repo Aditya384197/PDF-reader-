@@ -158,7 +158,7 @@ class BookStore(private val context: Context) {
 
     fun markPageReady(id: String) {
         val current = loadMeta(id) ?: return
-        val indexed = (current.indexedPages + 1).coerceAtMost(current.pageCount)
+        val indexed = (0 until current.pageCount).count { pageTextFile(id, it).exists() }
         saveMeta(current.copy(indexedPages = indexed, indexing = indexed < current.pageCount))
     }
 
@@ -222,8 +222,7 @@ class BookStore(private val context: Context) {
             if (file.exists()) file.delete()
             return
         }
-        file.writeText(pages.sorted().joinToString("
-"))
+        file.writeText(pages.sorted().joinToString("\n"))
     }
 
     private fun renderThumbnail(pdf: File): Bitmap? = runCatching {
@@ -241,7 +240,7 @@ class BookStore(private val context: Context) {
         }
     }.getOrNull()
 
-    private fun clean(value: String) = value.replace(Regex("\s+"), " ").trim()
+    private fun clean(value: String): String = value.replace(Regex("\\s+"), " ").trim()
 
     private fun sha1(value: String): String {
         val digest = MessageDigest.getInstance("SHA-1").digest(value.toByteArray())

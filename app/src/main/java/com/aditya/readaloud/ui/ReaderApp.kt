@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -234,7 +235,8 @@ private fun LibraryScreen(
 
 @Composable
 private fun BookCard(book: BookMeta, onOpen: () -> Unit, onDelete: () -> Unit) {
-    val store = remember { BookStore(LocalContext.current) }
+    val context = LocalContext.current
+    val store = remember { BookStore(context) }
     val bitmap = remember(book.id, book.lastOpenedAt) {
         BitmapFactory.decodeFile(store.thumbnailFile(book.id).absolutePath)
     }
@@ -471,7 +473,8 @@ private fun PdfPageView(book: BookMeta, page: Int, modifier: Modifier) {
 
 @Composable
 private fun LiveTextPanel(book: BookMeta, page: Int, playback: TtsController.PlaybackState, modifier: Modifier) {
-    val store = remember { BookStore(LocalContext.current) }
+    val context = LocalContext.current
+    val store = remember { BookStore(context) }
     val rawText by produceState("", book.id, page) {
         value = withContext(Dispatchers.IO) { store.ensurePageText(book.id, page) }
     }

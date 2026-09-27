@@ -20,100 +20,112 @@ object PdfExtractor {
 
     @Synchronized
     fun init(context: Context) {
-        if (!initialized) {
-            val app = context.applicationContext
-            PDFBoxResourceLoader.init(app)
-            recognizer = TextRecognition.getClient(DevanagariTextRecognizerOptions.Builder().build())
-            initialized = true
-        }
+        if (initialized) return
+        val app = context.applicationContext
+        PDFBoxResourceLoader.init(app)
+        recognizer = TextRecognition.getClient(
+            DevanagariTextRecognizerOptions.Builder().build()
+        )
+        initialized = true
     }
 
     fun pageCount(file: File): Int {
-        check(initialized)
-        PDDocument.load(file).use { return it.numberOfPages }
+        check(initialized) { "PdfExtractor.init(context) पहले कॉल करें" }
+        PDDocument.load(file).use { document ->
+            return document.numberOfPages
+        }
     }
 
     fun documentTitle(file: File): String = runCatching {
-        check(initialized)
-        PDDocument.load(file).use { it.documentInformation?.title.orEmpty() }
+        check(initialized) { "PdfExtractor.init(context) पहले कॉल करें" }
+        PDDocument.load(file).use { document ->
+            document.documentInformation?.title.orEmpty()
+        }
     }.getOrDefault("")
 
     fun extractPageText(file: File, pageIndex: Int): String = runCatching {
-        check(initialized)
-        PDDocument.load(file).use { doc ->
-            extractPageText(doc, pageIndex)
+        check(initialized) { "PdfExtractor.init(context) पहले कॉल करें" }
+        PDDocument.load(file).use { document ->
+            extractPageText(document, pageIndex)
         }
     }.getOrDefault("")
 
-    fun extractPagesText(file: File, pageIndexes: List<Int>): Map<Int, String> = runCatching {
-        check(initialized)
-        if (pageIndexes.isEmpty()) return@runCatching emptyMap()
-        PDDocument.load(file).use { doc ->
-            pageIndexes.distinct().associateWith { extractPageText(doc, it) }
-        }
-    }.getOrDefault(emptyMap())
+    fun extractPagesText(file: File, pageIndexes: List<Int>): Map<Int, String> {
+        if (pageIndexes.isEmpty()) return emptyMap()
+        return runCatching {
+            check(initialized) { "PdfExtractor.init(context) पहले कॉल करें" }
+            PDDocument.load(file).use { document ->
+                pageIndexes.distinct()
+                    .filter { it in 0 until document.numberOfPages }
+                    .associateWith { index -> extractPageText(document, index) }
+            }
+        }.getOrDefault(emptyMap())
+    }
 
-    fun extractAllPageText(file: File): List<String> = runCatching {
-        check(initialized)
-        PDDocument.load(file).use { doc ->
-            (0 until doc.numberOfPages).map { extractPageText(doc, it) }
-        }
-    }.getOrDefault(emptyList())
-
-    fun ocrPage(context: Context, file: File, pageIndex: Int): String =
-        ocrPages(context, file, listOf(pageIndex))[pageIndex].orEmpty()
+    fun ocrPage(context: Context, file: File, pageIndex: Int): String {
+        return ocrPages(context, file, listOf(pageIndex))[pageIndex].orEmpty()
+    }
 
     fun ocrPages(context: Context, file: File, pageIndexes: List<Int>): Map<Int, String> {
         init(context)
         if (pageIndexes.isEmpty()) return emptyMap()
+        val activeRecognizer = recognizer ?: return emptyMap()
         return runCatching {
             ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
                 PdfRenderer(pfd).use { renderer ->
-                    pageIndexes.distinct().filter { it in 0 until renderer.pageCount }.associateWith { index ->
-                        renderer.openPage(index).use { page ->
-                            val maxWidth = 1100
-                            val width = maxWidth
-                            val height = (maxWidth * page.height / page.width.toFloat()).toInt().coerceAtLeast(1)
-                            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                            try {
-                                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                                Tasks.await(recognizer!!.process(InputImage.fromBitmap(bitmap, 0))).text.normalizeOcr()
-                            } finally {
-                                bitmap.recycle()
+                    pageIndexes.distinct()
+                        .filter { it in 0 until renderer.pageCount }
+                        .associateWith { index ->
+                            renderer.openPage(index).use { page ->
+                                val width = 1100
+                                val height = (width * page.height / page.width.toFloat())
+                                    .toInt()
+                                    .coerceAtLeast(1)
+                                val bitmap = Bitmap.createBitmap(
+                                    width,
+                                    height,
+                                    Bitmap.Config.ARGB_8888
+                                )
+                                try {
+                                    page.render(
+                                        bitmap,
+                                        null,
+                                        null,
+                                        PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
+                                    )
+                                    val image = InputImage.fromBitmap(bitmap, 0)
+                                    Tasks.await(activeRecognizer.process(image)).text.normalizeOcr()
+                                } finally {
+                                    bitmap.recycle()
+                                }
                             }
                         }
-                    }
                 }
             }
         }.getOrDefault(emptyMap())
     }
 
-    private fun extractPageText(doc: PDDocument, pageIndex: Int): String {
-        if (pageIndex !in 0 until doc.numberOfPages) return ""
-        return PDFTextStripper().apply {
+    private fun extractPageText(document: PDDocument, pageIndex: Int): String {
+        if (pageIndex !in 0 until document.numberOfPages) return ""
+        val stripper = PDFTextStripper().apply {
             setSortByPosition(true)
             startPage = pageIndex + 1
             endPage = pageIndex + 1
-            lineSeparator = "
-"
+            lineSeparator = "\n"
             wordSeparator = " "
-        }.getText(doc).normalizeExtracted()
+        }
+        return stripper.getText(document).normalizeExtracted()
     }
 
     private fun String.normalizeExtracted(): String =
-        replace("­", "")
-            .replace(Regex("-\s*\n\s*"), "")
-            .replace(Regex("[ \t]+\n"), "
-")
-            .replace(Regex("\n{3,}"), "
-
-")
+        replace("\u00AD", "")
+            .replace(Regex("-\\s*\\n\\s*"), "")
+            .replace(Regex("[ \\t]+\\n"), "\n")
+            .replace(Regex("\\n{3,}"), "\n\n")
             .trim()
 
     private fun String.normalizeOcr(): String =
-        replace(Regex("[ \t]+"), " ")
-            .replace(Regex("\n{3,}"), "
-
-")
+        replace(Regex("[ \\t]+"), " ")
+            .replace(Regex("\\n{3,}"), "\n\n")
             .trim()
 }

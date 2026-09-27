@@ -1,16 +1,19 @@
-FINAL v6 REPLACEMENT FILES
+FINAL v7 replacement files
 
-Replace these files in your repository:
-1. app/build.gradle.kts
-2. .github/workflows/build-apk.yml
-3. app/src/main/AndroidManifest.xml
-4. app/src/main/java/com/aditya/readaloud/data/BookModels.kt
-5. app/src/main/java/com/aditya/readaloud/data/BookStore.kt
-6. app/src/main/java/com/aditya/readaloud/pdf/PdfExtractor.kt
-7. app/src/main/java/com/aditya/readaloud/pdf/PdfIndexWorker.kt
-8. app/src/main/java/com/aditya/readaloud/tts/GeminiTtsClient.kt
-9. app/src/main/java/com/aditya/readaloud/tts/TtsController.kt
-10. app/src/main/java/com/aditya/readaloud/ui/ReaderApp.kt
-11. app/src/main/java/com/aditya/readaloud/util/TextUtil.kt
+Replace these 11 files from the repository root:
 
-Do NOT replace the root build.gradle.kts; the existing AGP 9.0.1 + Kotlin 2.2.10 setup remains intentionally unchanged.
+.github/workflows/build-apk.yml
+app/build.gradle.kts
+app/src/main/AndroidManifest.xml
+app/src/main/java/com/aditya/readaloud/data/BookModels.kt
+app/src/main/java/com/aditya/readaloud/data/BookStore.kt
+app/src/main/java/com/aditya/readaloud/pdf/PdfExtractor.kt
+app/src/main/java/com/aditya/readaloud/pdf/PdfIndexWorker.kt
+app/src/main/java/com/aditya/readaloud/tts/GeminiTtsClient.kt
+app/src/main/java/com/aditya/readaloud/tts/TtsController.kt
+app/src/main/java/com/aditya/readaloud/ui/ReaderApp.kt
+app/src/main/java/com/aditya/readaloud/util/TextUtil.kt
+
+Do not change root build.gradle.kts.
+
+This release keeps compileSdk 36 / AGP 9.0.1 and uses AndroidX versions already verified by the previous successful AAR metadata step.

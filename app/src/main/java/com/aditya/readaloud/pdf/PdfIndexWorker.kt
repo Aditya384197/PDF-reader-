@@ -6,7 +6,6 @@ import androidx.work.WorkerParameters
 import com.aditya.readaloud.data.BookStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.math.min
 
 class PdfIndexWorker(
     appContext: Context,
@@ -63,5 +62,5 @@ class PdfIndexWorker(
         Result.success()
     }
 
-    private fun String.clean(): String = replace(Regex("\s+"), " ").trim()
+    private fun String.clean(): String = replace(Regex("\\s+"), " ").trim()
 }
