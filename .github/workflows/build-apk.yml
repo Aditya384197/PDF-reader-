@@ -1,89 +1,44 @@
-name: Unzip and Flatten Project
+name: Build Aditya Read Aloud APK
 
-# Trigger: whenever a .zip file is pushed/uploaded to the repo root (also
-# runnable manually from the Actions tab via "Run workflow").
 on:
-  push:
-    paths:
-      - '**.zip'
   workflow_dispatch:
-
-# Needed so this workflow's own commit/push back to the repo is allowed.
-permissions:
-  contents: write
+  push:
+    branches: [ "main" ]
 
 jobs:
-  unzip:
-    name: Extract uploaded zip into repo root
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
         with:
-          fetch-depth: 0
+          distribution: temurin
+          java-version: '17'
 
-      - name: Extract every zip at repo root and flatten into root
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android SDK packages
         run: |
-          set -e
-          shopt -s nullglob
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses >/dev/null || true
 
-          # Exact filename of the project zip you upload to repo root.
-          # If you upload a zip with a different name later, this still
-          # works — it's just checked first, then any other *.zip is
-          # picked up automatically below.
-          KNOWN_ZIP="ESP32-Flasher-PROJECT-NO-GITHUB-FOLDER.zip"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.1.0'
 
-          zips=(*.zip)
-          if [ -f "$KNOWN_ZIP" ]; then
-            echo "Found known zip: $KNOWN_ZIP"
-          fi
+      - name: Build debug APK
+        run: gradle --no-daemon --stacktrace assembleDebug
 
-          if [ ${#zips[@]} -eq 0 ]; then
-            echo "No .zip file found at repo root. Nothing to do."
-            exit 0
-          fi
-
-          for zipfile in "${zips[@]}"; do
-            echo "=== Extracting: $zipfile ==="
-            tmpdir=$(mktemp -d)
-            unzip -o "$zipfile" -d "$tmpdir" > /dev/null
-
-            # If the zip has a single top-level wrapper folder (common with
-            # GitHub-style "project-main/" exports), descend into it so its
-            # *contents* land at repo root instead of the wrapper itself.
-            src="$tmpdir"
-            entries=("$tmpdir"/*)
-            if [ ${#entries[@]} -eq 1 ] && [ -d "${entries[0]}" ]; then
-              src="${entries[0]}"
-              echo "Detected single wrapper folder: $(basename "$src")"
-            fi
-
-            # Copy everything into repo root EXCEPT .github — the default
-            # GITHUB_TOKEN this workflow runs with is never allowed to
-            # create/modify files under .github/workflows/, and a push that
-            # tries to will simply fail. Add/update workflow files manually
-            # instead (GitHub web UI: Add file > Create new file).
-            find "$src" -mindepth 1 -maxdepth 1 ! -name '.github' -exec cp -a -t . {} +
-
-            rm -rf "$tmpdir"
-            git rm -f "$zipfile" > /dev/null
-            echo "=== Done: $zipfile ==="
-          done
-
-      - name: Commit and push extracted files
-        run: |
-          set -e
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Belt-and-braces: never stage anything under .github, even if it
-          # somehow ended up on disk (e.g. a leftover from a previous run).
-          git add -A -- . ':!.github'
-
-          if git diff --cached --quiet; then
-            echo "Nothing to commit."
-            exit 0
-          fi
-
-          git commit -m "Auto-extract uploaded project zip"
-          git push
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aditya-Read-Aloud-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
