@@ -28,6 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -89,7 +90,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -315,7 +315,7 @@ private fun LibraryScreen(
 @Composable
 private fun BookCard(book: BookMeta, onOpen: () -> Unit, onDelete: () -> Unit) {
     val context = LocalContext.current
-    val store = remember(context) { BookStore(context) }
+    val store = remember { BookStore(context) }
     val bitmap = remember(book.id, book.lastOpenedAt) { BitmapFactory.decodeFile(store.thumbnailFile(book.id).absolutePath) }
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen),
@@ -508,17 +508,15 @@ private fun LiveTextPanel(book: BookMeta, page: Int, playback: TtsController.Pla
     val start = if (playback.bookId == book.id && playback.page == page) playback.currentStart else -1
     val end = if (playback.bookId == book.id && playback.page == page) playback.currentEnd else -1
     val highlightColor = MaterialTheme.colorScheme.primaryContainer
-    val annotated = remember(text, start, end, highlightColor) {
-        buildAnnotatedString {
-            append(text)
-            if (start >= 0 && end > start && start < text.length) {
-                val safeEnd = min(end, text.length)
-                addStyle(SpanStyle(background = highlightColor, fontWeight = FontWeight.SemiBold), start, safeEnd)
-            }
+    val annotated = buildAnnotatedString {
+        append(text)
+        if (start >= 0 && end > start && start < text.length) {
+            val safeEnd = min(end, text.length)
+            addStyle(SpanStyle(background = highlightColor, fontWeight = FontWeight.SemiBold), start, safeEnd)
         }
     }
     val scroll = rememberScrollState()
-    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var layout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
     LaunchedEffect(start, text) {
         val currentLayout = layout ?: return@LaunchedEffect
         if (start >= 0 && start < text.length) {

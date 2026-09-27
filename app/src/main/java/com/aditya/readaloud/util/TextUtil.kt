@@ -22,10 +22,14 @@ object TextUtil {
         while (start < text.length) {
             var end = minOf(start + limit, text.length)
             if (end < text.length) {
-                val candidates = listOf('.', '!', '?', '।', '\n', ' ')
-                    .mapNotNull { ch ->
-                        text.lastIndexOf(ch, end - 1).takeIf { it >= start }
-                    }
+                val candidates = listOf(
+                    text.lastIndexOf('.', end - 1),
+                    text.lastIndexOf('!', end - 1),
+                    text.lastIndexOf('?', end - 1),
+                    text.lastIndexOf('।', end - 1),
+                    text.lastIndexOf('\n', end - 1),
+                    text.lastIndexOf(' ', end - 1)
+                )
                 val boundary = candidates.maxOrNull() ?: -1
                 if (boundary > start + limit / 2) end = boundary + 1
             }

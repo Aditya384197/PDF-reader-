@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.aditya.readaloud"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.aditya.readaloud"
         minSdk = 23
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
     }
@@ -42,7 +42,9 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
+    // Compose 1.11.x is the last stable line before Compose 1.12 raised the
+    // minimum compileSdk requirement to API 37.
+    val composeBom = platform("androidx.compose:compose-bom:2026.04.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
