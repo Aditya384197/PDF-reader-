@@ -1,0 +1,16 @@
+FINAL v6 REPLACEMENT FILES
+
+Replace these files in your repository:
+1. app/build.gradle.kts
+2. .github/workflows/build-apk.yml
+3. app/src/main/AndroidManifest.xml
+4. app/src/main/java/com/aditya/readaloud/data/BookModels.kt
+5. app/src/main/java/com/aditya/readaloud/data/BookStore.kt
+6. app/src/main/java/com/aditya/readaloud/pdf/PdfExtractor.kt
+7. app/src/main/java/com/aditya/readaloud/pdf/PdfIndexWorker.kt
+8. app/src/main/java/com/aditya/readaloud/tts/GeminiTtsClient.kt
+9. app/src/main/java/com/aditya/readaloud/tts/TtsController.kt
+10. app/src/main/java/com/aditya/readaloud/ui/ReaderApp.kt
+11. app/src/main/java/com/aditya/readaloud/util/TextUtil.kt
+
+Do NOT replace the root build.gradle.kts; the existing AGP 9.0.1 + Kotlin 2.2.10 setup remains intentionally unchanged.

@@ -2,7 +2,6 @@ package com.aditya.readaloud.data
 
 import org.json.JSONObject
 
-/** Persistent metadata for one imported book. */
 data class BookMeta(
     val id: String,
     val title: String,
@@ -12,9 +11,11 @@ data class BookMeta(
     val importedAt: Long,
     val lastOpenedAt: Long,
     val lastPage: Int = 0,
-    val lastSpeed: Float = 1.0f,
+    val lastSpeed: Float = 0.95f,
     val languageMode: String = "auto",
-    val voiceName: String? = null
+    val voiceName: String? = null,
+    val indexedPages: Int = 0,
+    val indexing: Boolean = false
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("id", id)
@@ -28,6 +29,8 @@ data class BookMeta(
         put("lastSpeed", lastSpeed.toDouble())
         put("languageMode", languageMode)
         put("voiceName", voiceName ?: JSONObject.NULL)
+        put("indexedPages", indexedPages)
+        put("indexing", indexing)
     }
 
     companion object {
@@ -40,9 +43,11 @@ data class BookMeta(
             importedAt = json.getLong("importedAt"),
             lastOpenedAt = json.optLong("lastOpenedAt", json.getLong("importedAt")),
             lastPage = json.optInt("lastPage", 0),
-            lastSpeed = json.optDouble("lastSpeed", 1.0).toFloat(),
+            lastSpeed = json.optDouble("lastSpeed", 0.95).toFloat(),
             languageMode = json.optString("languageMode", "auto"),
-            voiceName = if (json.isNull("voiceName")) null else json.optString("voiceName").takeIf { it.isNotBlank() }
+            voiceName = if (json.isNull("voiceName")) null else json.optString("voiceName").takeIf { it.isNotBlank() },
+            indexedPages = json.optInt("indexedPages", 0),
+            indexing = json.optBoolean("indexing", false)
         )
     }
 }
