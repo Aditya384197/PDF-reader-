@@ -9,9 +9,9 @@ object TextUtil {
         .replace(Regex("[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]"), " ")
         .replace("\r\n", "\n")
         .replace("\r", "\n")
-        .replace(Regex("[ \t]+"), " ")
-        .replace(Regex(" *\n *"), "\n")
-        .replace(Regex("\n{3,}"), "\n\n")
+        .replace(Regex("[ \\t]+"), " ")
+        .replace(Regex(" *\\n *"), "\n")
+        .replace(Regex("\\n{3,}"), "\n\n")
         .trim()
 
     fun makeChunks(text: String, maxLength: Int): List<SpeechChunk> {
@@ -22,14 +22,10 @@ object TextUtil {
         while (start < text.length) {
             var end = minOf(start + limit, text.length)
             if (end < text.length) {
-                val candidates = listOf(
-                    text.lastIndexOf('.', end - 1, start),
-                    text.lastIndexOf('!', end - 1, start),
-                    text.lastIndexOf('?', end - 1, start),
-                    text.lastIndexOf('।', end - 1, start),
-                    text.lastIndexOf('\n', end - 1, start),
-                    text.lastIndexOf(' ', end - 1, start)
-                )
+                val candidates = listOf('.', '!', '?', '।', '\n', ' ')
+                    .mapNotNull { ch ->
+                        text.lastIndexOf(ch, end - 1).takeIf { it >= start }
+                    }
                 val boundary = candidates.maxOrNull() ?: -1
                 if (boundary > start + limit / 2) end = boundary + 1
             }
