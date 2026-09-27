@@ -42,16 +42,17 @@ android {
 }
 
 dependencies {
-    // Compose 1.11.x is the last stable line before Compose 1.12 raised the
-    // minimum compileSdk requirement to API 37.
+    // Compose BOM 2026.04.01 corresponds to the stable Compose 1.11 line.
+    // Compose 1.12+ moves to the API-37/AGP-9.1+ toolchain.
     val composeBom = platform("androidx.compose:compose-bom:2026.04.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
-    implementation("androidx.core:core-ktx:1.19.1")
+    // These versions stay on the Android API 36-compatible toolchain.
+    implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.activity:activity-compose:1.13.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
 
